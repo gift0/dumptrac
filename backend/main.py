@@ -1,7 +1,7 @@
 """
 dumpTrac FastAPI application.
 
-This module initializes the FastAPI app, configures CORS middleware, 
+This module initializes the FastAPI app, configures CORS middleware,
 sets up the database schema, and registers API routes.
 
 Features:
@@ -9,27 +9,43 @@ Features:
 - API routes are included under the `/api` prefix.
 - A root endpoint (`/`) is provided for health/status checks.
 """
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.database import Base, engine
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from alembic.config import Config
+from alembic import command
+from app.database import Base
 from app.routes import router as api_router
 
-# dumpTrac FastAPI backend application.
+# Load DATABASE_URL from environment
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL environment variable not set!")
 
+# SQLAlchemy engine and session
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Run Alembic migrations on startup
+def run_migrations():
+    alembic_cfg = Config("migrations/alembic.ini")
+    command.upgrade(alembic_cfg, "head")
 
 @asynccontextmanager
-# Manage startup and shutdown tasks.
-async def lifespan(_: FastAPI):
-    # Startup logic
+async def lifespan(app: FastAPI):
+    # Startup: run migrations and create tables if missing
+    run_migrations()
     Base.metadata.create_all(bind=engine)
     yield
-    # (Optional) Shutdown logic
+    # Shutdown logic (optional)
 
-# Initialize FastAPI application instance.
+# Initialize FastAPI
 app = FastAPI(title="dumpTrac", lifespan=lifespan)
 
-# CORS for local dev
+# CORS configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -38,11 +54,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Register API routes under /api.
+# Include API routes
 app.include_router(api_router, prefix="/api")
 
-
-# Return API health check response.
+# Root endpoint
 @app.get("/")
 def root():
     return {"status": "ok", "message": "dumpTrac API"}
