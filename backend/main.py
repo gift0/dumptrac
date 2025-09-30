@@ -12,8 +12,8 @@ Features:
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.database import Base, engine
-from app.routes import router as api_router
+from backend.app.database import Base, engine
+from backend.app.routes import router as api_router
 
 # dumpTrac FastAPI backend application.
 
