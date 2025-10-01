@@ -21,7 +21,8 @@ from app.routes import router as api_router
 async def lifespan(_: FastAPI):
     """Manage startup and shutdown tasks."""
     # Startup logic
-    Base.metadata.create_all(bind=engine)
+    # Commented out - tables are managed by Alembic migrations
+    # Base.metadata.create_all(bind=engine)
     yield
     # (Optional) Shutdown logic
 
