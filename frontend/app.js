@@ -19,7 +19,22 @@ async function api(path, options = {}) {
 }
 
 // ------------------ INDEX PAGE ------------------
-// Handle report submission
+// Ensure bin exists and submit report
+async function submitReport(location, latitude, longitude) {
+    // 1. Create or get bin from backend
+    const bin = await api("/bins", {
+        method: "POST",
+        body: { location: String(location), latitude, longitude }
+    });
+
+    // 2. Create report using bin.id
+    return api("/reports", {
+        method: "POST",
+        body: { bin_id: bin.id, status: "full" }
+    });
+}
+
+// Handle form submission
 function onIndexPage() {
     const form = document.getElementById("report-form");
     if (!form) return;
@@ -32,7 +47,7 @@ function onIndexPage() {
     const locationInput = document.getElementById("location");
 
     // Use geolocation button
-    useLocationBtn?.addEventListener("click", async () => {
+    useLocationBtn?.addEventListener("click", () => {
         geoStatus.textContent = "Fetching location...";
         if (!navigator.geolocation) {
             geoStatus.textContent = "Geolocation not supported";
@@ -63,26 +78,13 @@ function onIndexPage() {
             status.textContent = "Error: Location description is required.";
             return;
         }
-
         if (isNaN(lat) || isNaN(lng)) {
             status.textContent = "Error: Please attach your current coordinates using 'Use My Location'.";
             return;
         }
 
-        // Generate unique bin_id from location
-        const bin_id = `BIN-${location.toUpperCase().replace(/\s+/g, '-')}`;
-
         try {
-            await api("/reports", {
-                method: "POST",
-                body: {
-                    bin_id,
-                    status: "full",
-                    latitude: lat,
-                    longitude: lng
-                }
-            });
-
+            await submitReport(location, lat, lng);
             status.textContent = "Report submitted. Thank you!";
             locationInput.value = "";
             latEl.value = "";
