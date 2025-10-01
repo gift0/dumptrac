@@ -7,8 +7,20 @@ from . import models, schemas
 
 router = APIRouter()
 
-# ----------------- Bins -----------------
+# ----------------- Health Check -----------------
+@router.get("/db-check")
+def db_check(db: Session = Depends(get_db)):
+    """
+    Simple DB health check to confirm Supabase connection.
+    """
+    try:
+        result = db.execute("SELECT 1").scalar()
+        return {"db_status": "ok", "result": result}
+    except Exception as e:
+        return {"db_status": "error", "detail": str(e)}
 
+
+# ----------------- Bins -----------------
 @router.post("/bins", response_model=schemas.BinRead)
 def create_bin(bin_in: schemas.BinCreate, db: Session = Depends(get_db)):
     """
@@ -58,7 +70,6 @@ def list_bins(db: Session = Depends(get_db)):
 
 
 # ----------------- Reports -----------------
-
 @router.get("/reports", response_model=List[schemas.ReportRead])
 def list_reports(db: Session = Depends(get_db)):
     """List all reports, newest first."""
