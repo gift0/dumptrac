@@ -42,6 +42,11 @@ class ReportRead(ReportBase):
         orm_mode = True
 
 
+# Report with Bin details included
+class ReportWithBin(ReportRead):
+    bin: BinRead
+
+
 # ----------- Bin with Reports -----------
 
 class BinWithReports(BinRead):

@@ -20,30 +20,24 @@ async function api(path, options = {}) {
 }
 
 // ------------------ INDEX PAGE ------------------
-// Ensure bin exists (create if missing) and submit report
 async function ensureBin(location, latitude, longitude) {
   if (latitude == null || longitude == null) {
     throw new Error("Latitude and longitude are required.");
   }
-
-  // Convert lat/lng to string for backend
   return api("/bins", {
     method: "POST",
-    body: { location, latitude: String(latitude), longitude: String(longitude) }
+    body: { location, latitude, longitude }
   });
 }
 
 async function submitReport(location, latitude, longitude) {
   const bin = await ensureBin(location, latitude, longitude);
-
-  // Create report using bin.id
   return api("/reports", {
     method: "POST",
     body: { bin_id: bin.id, status: "full" }
   });
 }
 
-// Handle index form submission
 function onIndexPage() {
   const form = document.getElementById("report-form");
   if (!form) return;
@@ -124,7 +118,7 @@ function renderReportsTable(reports) {
   tableBody.innerHTML = "";
 
   if (!reports.length) {
-    tableBody.innerHTML = "<tr><td colspan=6>No reports yet</td></tr>";
+    tableBody.innerHTML = "<tr><td colspan=8>No reports yet</td></tr>";
     return;
   }
 
@@ -133,10 +127,14 @@ function renderReportsTable(reports) {
     tr.innerHTML = `
       <td>${r.id}</td>
       <td>${r.bin_id}</td>
-      <td>${r.status}</td>
+      <td>${r.bin?.location || "-"}</td>
+      <td>${r.bin?.latitude || "-"}</td>
+      <td>${r.bin?.longitude || "-"}</td>
+      <td>${r.status === "done" ? "Done" : "Full"}</td>
       <td>${new Date(r.created_at).toLocaleString()}</td>
-      <td>${r.cleared_at ? new Date(r.cleared_at).toLocaleString() : "-"}</td>
-      <td>${r.status !== "done" ? `<button class="clear-btn" data-id="${r.id}">Clear</button>` : "-"}</td>
+      <td>
+        ${r.status !== "done" ? `<button class="clear-btn" data-id="${r.id}">Clear</button>` : "-"}
+      </td>
     `;
     tableBody.appendChild(tr);
   }
@@ -178,14 +176,26 @@ function renderMapMarkers(reports) {
   markersLayer.clearLayers();
 
   for (const r of reports) {
-    if (!r.latitude || !r.longitude) continue;
-    const lat = parseFloat(r.latitude);
-    const lng = parseFloat(r.longitude);
+    if (!r.bin?.latitude || !r.bin?.longitude) continue;
+    const lat = parseFloat(r.bin.latitude);
+    const lng = parseFloat(r.bin.longitude);
     if (isNaN(lat) || isNaN(lng)) continue;
 
-    const htmlContent = r.status === "done" ? `<div class="marker-green">Done</div>` : `<div class="marker-red"></div>`;
-    const binIcon = L.divIcon({ html: htmlContent, className: "", iconSize: [24, 24], iconAnchor: [12, 12] });
-    const tooltipText = r.status === "done" ? `Bin ${r.bin_id} - Done at ${new Date(r.cleared_at).toLocaleString()}` : `Bin ${r.bin_id} - Full`;
+    const htmlContent = r.status === "done"
+      ? `<div class="marker-green">✔</div>`
+      : `<div class="marker-red blink">⚠</div>`;
+
+    const binIcon = L.divIcon({
+      html: htmlContent,
+      className: "",
+      iconSize: [24, 24],
+      iconAnchor: [12, 12]
+    });
+
+    const tooltipText =
+      r.status === "done"
+        ? `${r.bin.location} - Done at ${new Date(r.cleared_at).toLocaleString()}`
+        : `${r.bin.location} - Full`;
 
     const marker = L.marker([lat, lng], { icon: binIcon });
     marker.bindTooltip(tooltipText, { permanent: false, direction: 'top', offset: [0, -10] });
@@ -196,13 +206,13 @@ function renderMapMarkers(reports) {
 // Refresh dashboard
 async function refreshDashboard() {
   const tableBody = document.querySelector("#reports-table tbody");
-  if (tableBody) tableBody.innerHTML = "<tr><td colspan=6>Loading...</td></tr>";
+  if (tableBody) tableBody.innerHTML = "<tr><td colspan=8>Loading...</td></tr>";
   try {
     const { reports } = await loadReports();
     renderReportsTable(reports);
     renderMapMarkers(reports);
   } catch (err) {
-    if (tableBody) tableBody.innerHTML = `<tr><td colspan=6>Error loading data: ${err.message || err}</td></tr>`;
+    if (tableBody) tableBody.innerHTML = `<tr><td colspan=8>Error loading data: ${err.message || err}</td></tr>`;
     console.error(err);
   }
 }

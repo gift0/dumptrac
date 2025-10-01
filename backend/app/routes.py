@@ -1,6 +1,6 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import text
 from datetime import datetime
 from .database import get_db
@@ -71,22 +71,27 @@ def list_bins(db: Session = Depends(get_db)):
 
 
 # ----------------- Reports -----------------
-@router.get("/reports", response_model=List[schemas.ReportRead])
+@router.get("/reports", response_model=List[schemas.ReportWithBin])
 def list_reports(db: Session = Depends(get_db)):
-    """List all reports, newest first."""
+    """List all reports with bin details, newest first."""
     try:
-        reports = db.query(models.Report).order_by(models.Report.created_at.desc()).all()
-        print(f"📑 Retrieved {len(reports)} reports")
+        reports = (
+            db.query(models.Report)
+            .options(joinedload(models.Report.bin))
+            .order_by(models.Report.created_at.desc())
+            .all()
+        )
+        print(f"📑 Retrieved {len(reports)} reports (with bin info)")
         return reports
     except Exception as e:
         print("❌ Error in /reports GET:", e)
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
-@router.post("/reports", response_model=schemas.ReportRead)
+@router.post("/reports", response_model=schemas.ReportWithBin)
 def create_report(report_in: schemas.ReportCreate, db: Session = Depends(get_db)):
     """
-    Create a report for an existing bin.
+    Create a report for an existing bin and return full details.
     """
     try:
         bin_obj = db.query(models.Bin).filter(models.Bin.id == report_in.bin_id).first()
@@ -113,13 +118,13 @@ def create_report(report_in: schemas.ReportCreate, db: Session = Depends(get_db)
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
-@router.put("/reports/{report_id}/clear", response_model=schemas.ReportRead)
+@router.put("/reports/{report_id}/clear", response_model=schemas.ReportWithBin)
 def clear_report(report_id: int, db: Session = Depends(get_db)):
     """
     Mark a report as cleared and set cleared_at timestamp.
     """
     try:
-        db_report = db.query(models.Report).filter(models.Report.id == report_id).first()
+        db_report = db.query(models.Report).options(joinedload(models.Report.bin)).filter(models.Report.id == report_id).first()
         if not db_report:
             raise HTTPException(status_code=404, detail="Report not found")
 
