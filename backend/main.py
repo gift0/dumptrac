@@ -20,10 +20,11 @@ from app.routes import router as api_router
 async def lifespan(_: FastAPI):
     """Manage startup and shutdown tasks."""
     try:
-        # Ensure tables exist (useful if Alembic migrations not run yet)
+        # Ensure tables exist (if Alembic migrations not run yet)
         Base.metadata.create_all(bind=engine)
+        print("✅ Database tables checked/created on startup.")
     except Exception as e:
-        print("Error creating tables on startup:", e)
+        print("❌ Error creating tables on startup:", e)
     yield
     # Optional shutdown logic
 
@@ -65,4 +66,5 @@ app.include_router(api_router, prefix="/api")
 # Root health check
 @app.get("/")
 def root():
+    """Return API health check response."""
     return {"status": "ok", "message": "dumpTrac API"}

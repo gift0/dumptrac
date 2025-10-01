@@ -19,15 +19,18 @@ async function api(path, options = {}) {
 }
 
 // ------------------ INDEX PAGE ------------------
-// Ensure bin exists and submit report
-async function submitReport(location, latitude, longitude) {
-    // 1. Create or get bin from backend
+// Ensure bin exists
+async function ensureBin(location, latitude, longitude) {
     const bin = await api("/bins", {
         method: "POST",
-        body: { location: String(location), latitude, longitude }
+        body: { location, latitude, longitude }
     });
+    return bin;
+}
 
-    // 2. Create report using bin.id
+// Submit report
+async function submitReport(location, latitude, longitude) {
+    const bin = await ensureBin(location, latitude, longitude);
     return api("/reports", {
         method: "POST",
         body: { bin_id: bin.id, status: "full" }
@@ -46,7 +49,7 @@ function onIndexPage() {
     const lngEl = document.getElementById("lng");
     const locationInput = document.getElementById("location");
 
-    // Use geolocation button
+    // Use geolocation
     useLocationBtn?.addEventListener("click", () => {
         geoStatus.textContent = "Fetching location...";
         if (!navigator.geolocation) {
@@ -65,7 +68,7 @@ function onIndexPage() {
         );
     });
 
-    // Form submission
+    // Form submit
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
         status.textContent = "Submitting...";
@@ -79,7 +82,7 @@ function onIndexPage() {
             return;
         }
         if (isNaN(lat) || isNaN(lng)) {
-            status.textContent = "Error: Please attach your current coordinates using 'Use My Location'.";
+            status.textContent = "Error: Coordinates are required. Click 'Use My Location'.";
             return;
         }
 
@@ -98,47 +101,52 @@ function onIndexPage() {
 }
 
 // ------------------ DASHBOARD PAGE ------------------
-// Load reports from backend
+// Load reports from backend including bin data
 async function loadReports() {
     try {
         const reports = await api("/reports");
-        return { reports };
+        const bins = await api("/bins");
+        const binIdToBin = new Map(bins.map(b => [b.id, b]));
+        return { reports, binIdToBin };
     } catch (err) {
         console.error("Failed to fetch reports:", err);
-        return { reports: [] };
+        return { reports: [], binIdToBin: new Map() };
     }
 }
 
-// Clear a single report
+// Clear a report
 async function clearReport(reportId) {
     return api(`/reports/${reportId}/clear`, { method: "PUT" });
 }
 
 // Render dashboard table
-function renderReportsTable(reports) {
+function renderReportsTable(reports, binIdToBin) {
     const tableBody = document.querySelector("#reports-table tbody");
     if (!tableBody) return;
     tableBody.innerHTML = "";
 
     if (!reports || reports.length === 0) {
-        tableBody.innerHTML = "<tr><td colspan=6>No reports yet</td></tr>";
+        tableBody.innerHTML = "<tr><td colspan=8>No reports yet</td></tr>";
         return;
     }
 
     for (const r of reports) {
+        const b = binIdToBin.get(r.bin_id) || {};
         const tr = document.createElement("tr");
         tr.innerHTML = `
             <td>${r.id}</td>
             <td>${r.bin_id}</td>
+            <td>${b.location || "-"}</td>
+            <td>${b.latitude ?? "-"}</td>
+            <td>${b.longitude ?? "-"}</td>
             <td>${r.status}</td>
             <td>${new Date(r.created_at).toLocaleString()}</td>
-            <td>${r.cleared_at ? new Date(r.cleared_at).toLocaleString() : "-"}</td>
             <td>${r.status !== 'done' ? `<button class="clear-btn" data-id="${r.id}">Clear</button>` : "-"}</td>
         `;
         tableBody.appendChild(tr);
     }
 
-    // Add event listeners to clear buttons
+    // Attach clear button listeners
     document.querySelectorAll(".clear-btn").forEach(btn => {
         btn.addEventListener("click", async (e) => {
             const id = e.target.dataset.id;
@@ -170,15 +178,16 @@ function ensureMap() {
     return mapInstance;
 }
 
-function renderMapMarkers(reports) {
+function renderMapMarkers(reports, binIdToBin) {
     const map = ensureMap();
     if (!map || !markersLayer) return;
     markersLayer.clearLayers();
 
     for (const r of reports) {
-        if (r.latitude == null || r.longitude == null) continue;
-        const lat = parseFloat(r.latitude);
-        const lng = parseFloat(r.longitude);
+        const b = binIdToBin.get(r.bin_id);
+        if (!b || !b.latitude || !b.longitude) continue;
+        const lat = parseFloat(b.latitude);
+        const lng = parseFloat(b.longitude);
         if (isNaN(lat) || isNaN(lng)) continue;
 
         const htmlContent = r.status === "done" && r.cleared_at
@@ -187,8 +196,8 @@ function renderMapMarkers(reports) {
 
         const binIcon = L.divIcon({ html: htmlContent, className: "", iconSize: [24, 24], iconAnchor: [12, 12] });
         const tooltipText = r.status === "done" && r.cleared_at
-            ? `Bin ${r.bin_id} - Done at ${new Date(r.cleared_at).toLocaleString()}`
-            : `Bin ${r.bin_id} - Full`;
+            ? `${b.location || 'Unknown'} - Done at ${new Date(r.cleared_at).toLocaleString()}`
+            : `${b.location || 'Unknown'} - Bin Full`;
 
         const marker = L.marker([lat, lng], { icon: binIcon });
         marker.bindTooltip(tooltipText, { permanent: false, direction: 'top', offset: [0, -10] });
@@ -199,13 +208,13 @@ function renderMapMarkers(reports) {
 // Refresh dashboard
 async function refreshDashboard() {
     const tableBody = document.querySelector("#reports-table tbody");
-    if (tableBody) tableBody.innerHTML = "<tr><td colspan=6>Loading...</td></tr>";
+    if (tableBody) tableBody.innerHTML = "<tr><td colspan=8>Loading...</td></tr>";
     try {
-        const { reports } = await loadReports();
-        renderReportsTable(reports);
-        renderMapMarkers(reports);
+        const { reports, binIdToBin } = await loadReports();
+        renderReportsTable(reports, binIdToBin);
+        renderMapMarkers(reports, binIdToBin);
     } catch (err) {
-        if (tableBody) tableBody.innerHTML = `<tr><td colspan=6>Error loading data: ${err.message || err}</td></tr>`;
+        if (tableBody) tableBody.innerHTML = `<tr><td colspan=8>Error loading data: ${err.message || err}</td></tr>`;
         console.error(err);
     }
 }

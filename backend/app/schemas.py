@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
 
 
@@ -7,8 +7,8 @@ from typing import List, Optional
 
 class BinBase(BaseModel):
     location: str
-    latitude: Optional[str] = None
-    longitude: Optional[str] = None
+    latitude: float = Field(..., description="Latitude of the bin")
+    longitude: float = Field(..., description="Longitude of the bin")
 
 
 class BinCreate(BinBase):
@@ -29,7 +29,7 @@ class ReportBase(BaseModel):
 
 
 class ReportCreate(ReportBase):
-    bin_id: int   # reports must belong to a bin
+    bin_id: int  # reports must belong to a bin
 
 
 class ReportRead(ReportBase):
