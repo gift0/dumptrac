@@ -7,8 +7,8 @@ from typing import List, Optional
 
 class BinBase(BaseModel):
     location: str
-    latitude: float = Field(..., description="Latitude of the bin")
-    longitude: float = Field(..., description="Longitude of the bin")
+    latitude: float = Field(..., description="Latitude of the bin (float)")
+    longitude: float = Field(..., description="Longitude of the bin (float)")
 
 
 class BinCreate(BinBase):

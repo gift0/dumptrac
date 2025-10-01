@@ -11,7 +11,11 @@ class Bin(Base):
     longitude = Column(Float, nullable=False)
 
     # Relationship with reports
-    reports = relationship("Report", back_populates="bin", cascade="all, delete-orphan")
+    reports = relationship(
+        "Report",
+        back_populates="bin",
+        cascade="all, delete-orphan"
+    )
 
 
 class Report(Base):
