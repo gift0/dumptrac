@@ -1,9 +1,8 @@
-// ✅ Backend URL from environment variable
+// ✅ Backend URL
 const BASE_URL =
     window.location.hostname.includes("localhost") || window.location.hostname.includes("127.0.0.1")
         ? "http://127.0.0.1:8000/api"
         : "https://dumptrac.vercel.app/api";
-
 
 // Generic API helper
 async function api(path, options = {}) {
@@ -44,34 +43,32 @@ function onIndexPage() {
     const latEl = document.getElementById("lat");
     const lngEl = document.getElementById("lng");
 
-    useLocationBtn.addEventListener("click", async () => {
+    useLocationBtn?.addEventListener("click", async () => {
         geoStatus.textContent = "Fetching location...";
-        try {
-            if (!navigator.geolocation) throw new Error("Geolocation not supported");
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    const { latitude, longitude } = pos.coords;
-                    latEl.value = String(latitude);
-                    lngEl.value = String(longitude);
-                    geoStatus.textContent = `Attached coords: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
-                },
-                (err) => { geoStatus.textContent = `Location error: ${err.message}`; },
-                { enableHighAccuracy: true, timeout: 10000 }
-            );
-        } catch (err) {
-            geoStatus.textContent = `Error: ${err.message || err}`;
+        if (!navigator.geolocation) {
+            geoStatus.textContent = "Geolocation not supported";
+            return;
         }
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const { latitude, longitude } = pos.coords;
+                latEl.value = latitude.toFixed(6);
+                lngEl.value = longitude.toFixed(6);
+                geoStatus.textContent = `Attached coords: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+            },
+            (err) => { geoStatus.textContent = `Location error: ${err.message}`; },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
     });
 
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
         status.textContent = "Submitting...";
         const locationInput = document.getElementById("location");
+        const lat = parseFloat(latEl.value);
+        const lng = parseFloat(lngEl.value);
 
-        const lat = latEl.value ? parseFloat(latEl.value) : null;
-        const lng = lngEl.value ? parseFloat(lngEl.value) : null;
-
-        if (lat === null || lng === null) {
+        if (isNaN(lat) || isNaN(lng)) {
             status.textContent = "Error: Please attach your current location before submitting.";
             return;
         }
@@ -112,6 +109,11 @@ function renderReportsTable(reports, binIdToBin) {
     if (!tableBody) return;
     tableBody.innerHTML = "";
 
+    if (reports.length === 0) {
+        tableBody.innerHTML = "<tr><td colspan=8>No reports yet</td></tr>";
+        return;
+    }
+
     for (const r of reports) {
         const b = binIdToBin.get(r.bin_id) || {};
         const tr = document.createElement("tr");
@@ -123,14 +125,11 @@ function renderReportsTable(reports, binIdToBin) {
             <td>${b.longitude ?? "-"}</td>
             <td>${r.status}</td>
             <td>${new Date(r.created_at).toLocaleString()}</td>
-            <td>
-                ${r.status !== 'done' ? `<button class="clear-btn" data-id="${r.id}">Clear</button>` : "-"}
-            </td>
+            <td>${r.status !== 'done' ? `<button class="clear-btn" data-id="${r.id}">Clear</button>` : "-"}</td>
         `;
         tableBody.appendChild(tr);
     }
 
-    // Attach event listeners for clear buttons
     document.querySelectorAll(".clear-btn").forEach(btn => {
         btn.addEventListener("click", async (e) => {
             const id = e.target.dataset.id;
@@ -142,10 +141,6 @@ function renderReportsTable(reports, binIdToBin) {
             }
         });
     });
-
-    if (reports.length === 0) {
-        tableBody.innerHTML = "<tr><td colspan=8>No reports yet</td></tr>";
-    }
 }
 
 // Map handling
@@ -166,7 +161,7 @@ function ensureMap() {
     return mapInstance;
 }
 
-// Render map markers with blinking effect
+// Render map markers
 function renderMapMarkers(reports, binIdToBin) {
     const map = ensureMap();
     if (!map || !markersLayer) return;
@@ -175,27 +170,18 @@ function renderMapMarkers(reports, binIdToBin) {
     for (const r of reports) {
         const b = binIdToBin.get(r.bin_id);
         if (!b) continue;
-
         const lat = parseFloat(b.latitude);
         const lng = parseFloat(b.longitude);
         if (isNaN(lat) || isNaN(lng)) continue;
 
-        const isCleared = r.status === "done" && r.cleared_at;
-
-        const htmlContent = isCleared
+        const htmlContent = r.status === "done" && r.cleared_at
             ? `<div class="marker-green">Done</div>`
-            : `<div class="marker-red"></div>`; // pulsing red for alerts
+            : `<div class="marker-red"></div>`;
 
-        const binIcon = L.divIcon({
-            html: htmlContent,
-            className: "",
-            iconSize: [24, 24],
-            iconAnchor: [12, 12]
-        });
-
-        const tooltipText = isCleared
-            ? `${b.location || 'Unknown location'} - Done at ${new Date(r.cleared_at).toLocaleString()}`
-            : `${b.location || 'Unknown location'} - Bin Full`;
+        const binIcon = L.divIcon({ html: htmlContent, className: "", iconSize: [24, 24], iconAnchor: [12, 12] });
+        const tooltipText = r.status === "done" && r.cleared_at
+            ? `${b.location || 'Unknown'} - Done at ${new Date(r.cleared_at).toLocaleString()}`
+            : `${b.location || 'Unknown'} - Bin Full`;
 
         const marker = L.marker([lat, lng], { icon: binIcon });
         marker.bindTooltip(tooltipText, { permanent: false, direction: 'top', offset: [0, -10] });
@@ -213,6 +199,7 @@ async function refreshDashboard() {
         renderMapMarkers(reports, binIdToBin);
     } catch (err) {
         if (tableBody) tableBody.innerHTML = `<tr><td colspan=8>Error loading data: ${err.message || err}</td></tr>`;
+        console.error(err);
     }
 }
 
