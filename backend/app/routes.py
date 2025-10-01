@@ -1,6 +1,7 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from datetime import datetime
 from .database import get_db
 from . import models, schemas
@@ -14,7 +15,7 @@ def db_check(db: Session = Depends(get_db)):
     Simple DB health check to confirm Supabase connection.
     """
     try:
-        result = db.execute("SELECT 1").scalar()
+        result = db.execute(text("SELECT 1")).scalar()
         return {"db_status": "ok", "result": result}
     except Exception as e:
         return {"db_status": "error", "detail": str(e)}
