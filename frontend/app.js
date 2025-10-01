@@ -18,30 +18,76 @@ async function api(path, options = {}) {
     return res.json();
 }
 
-// Submit report
-async function submitReport(bin_id) {
-    return api("/reports", { method: "POST", body: { bin_id, status: "full" } });
-}
-
-// Index page: handle form submission
+// ------------------ INDEX PAGE ------------------
+// Handle report submission
 function onIndexPage() {
     const form = document.getElementById("report-form");
     if (!form) return;
 
     const status = document.getElementById("status");
-    const binInput = document.getElementById("bin-id"); // frontend input for bin_id
+    const useLocationBtn = document.getElementById("use-location");
+    const geoStatus = document.getElementById("geo-status");
+    const latEl = document.getElementById("lat");
+    const lngEl = document.getElementById("lng");
+    const locationInput = document.getElementById("location");
 
+    // Use geolocation button
+    useLocationBtn?.addEventListener("click", async () => {
+        geoStatus.textContent = "Fetching location...";
+        if (!navigator.geolocation) {
+            geoStatus.textContent = "Geolocation not supported";
+            return;
+        }
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const { latitude, longitude } = pos.coords;
+                latEl.value = latitude.toFixed(6);
+                lngEl.value = longitude.toFixed(6);
+                geoStatus.textContent = `Attached coords: ${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+            },
+            (err) => { geoStatus.textContent = `Location error: ${err.message}`; },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+    });
+
+    // Form submission
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
         status.textContent = "Submitting...";
-        try {
-            const bin_id = binInput.value.trim();
-            if (!bin_id) throw new Error("Bin ID is required");
 
-            await submitReport(bin_id);
+        const location = locationInput.value.trim();
+        const lat = parseFloat(latEl.value);
+        const lng = parseFloat(lngEl.value);
+
+        if (!location) {
+            status.textContent = "Error: Location description is required.";
+            return;
+        }
+
+        if (isNaN(lat) || isNaN(lng)) {
+            status.textContent = "Error: Please attach your current coordinates using 'Use My Location'.";
+            return;
+        }
+
+        // Generate unique bin_id from location
+        const bin_id = `BIN-${location.toUpperCase().replace(/\s+/g, '-')}`;
+
+        try {
+            await api("/reports", {
+                method: "POST",
+                body: {
+                    bin_id,
+                    status: "full",
+                    latitude: lat,
+                    longitude: lng
+                }
+            });
 
             status.textContent = "Report submitted. Thank you!";
-            binInput.value = "";
+            locationInput.value = "";
+            latEl.value = "";
+            lngEl.value = "";
+            geoStatus.textContent = "";
             await refreshDashboard();
         } catch (err) {
             status.textContent = `Error: ${err.message || err}`;
@@ -49,6 +95,7 @@ function onIndexPage() {
     });
 }
 
+// ------------------ DASHBOARD PAGE ------------------
 // Load reports from backend
 async function loadReports() {
     try {
@@ -65,7 +112,7 @@ async function clearReport(reportId) {
     return api(`/reports/${reportId}/clear`, { method: "PUT" });
 }
 
-// Render table
+// Render dashboard table
 function renderReportsTable(reports) {
     const tableBody = document.querySelector("#reports-table tbody");
     if (!tableBody) return;
@@ -89,6 +136,7 @@ function renderReportsTable(reports) {
         tableBody.appendChild(tr);
     }
 
+    // Add event listeners to clear buttons
     document.querySelectorAll(".clear-btn").forEach(btn => {
         btn.addEventListener("click", async (e) => {
             const id = e.target.dataset.id;
@@ -102,7 +150,7 @@ function renderReportsTable(reports) {
     });
 }
 
-// Map handling (optional)
+// ------------------ MAP ------------------
 let mapInstance = null;
 let markersLayer = null;
 
@@ -126,7 +174,7 @@ function renderMapMarkers(reports) {
     markersLayer.clearLayers();
 
     for (const r of reports) {
-        if (!r.latitude || !r.longitude) continue;
+        if (r.latitude == null || r.longitude == null) continue;
         const lat = parseFloat(r.latitude);
         const lng = parseFloat(r.longitude);
         if (isNaN(lat) || isNaN(lng)) continue;
@@ -168,7 +216,7 @@ function onDashboardPage() {
     refreshDashboard();
 }
 
-// Init
+// ------------------ INIT ------------------
 window.addEventListener("DOMContentLoaded", () => {
     onIndexPage();
     onDashboardPage();
