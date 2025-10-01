@@ -14,7 +14,7 @@ from app.routes import router as api_router
 async def lifespan(_: FastAPI):
     """Startup and shutdown tasks."""
     try:
-        # Create tables if not exist (useful if migrations not run)
+        # Create tables if they do not exist
         Base.metadata.create_all(bind=engine)
         print("✅ Tables are ready")
     except Exception as e:
@@ -33,12 +33,12 @@ ALLOWED_ORIGINS = [
     "http://localhost:5500",
 ]
 
-# Add optional preview deployment origin
+# Allow Vercel preview deployments dynamically
 VERCEL_URL = os.getenv("VERCEL_URL")
 if VERCEL_URL:
     ALLOWED_ORIGINS.append(f"https://{VERCEL_URL}")
 
-# Add any custom frontend URL
+# Allow custom frontend URLs
 FRONTEND_URL = os.getenv("FRONTEND_URL")
 if FRONTEND_URL:
     ALLOWED_ORIGINS.append(FRONTEND_URL)
@@ -46,16 +46,16 @@ if FRONTEND_URL:
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,  # <- this is critical
+    allow_origins=ALLOWED_ORIGINS,  # crucial for frontend access
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ----------------- Routes -----------------
+# ----------------- API Routes -----------------
 app.include_router(api_router, prefix="/api")
 
-# ----------------- Health Check -----------------
+# ----------------- Root / Health Check -----------------
 @app.get("/")
 def root():
     return {"status": "ok", "message": "dumpTrac API"}
