@@ -3,11 +3,6 @@ dumpTrac FastAPI application.
 
 This module initializes the FastAPI app, configures CORS middleware, 
 sets up the database schema, and registers API routes.
-
-Features:
-- Database tables are created on startup via SQLAlchemy.
-- API routes are included under the `/api` prefix.
-- A root endpoint (`/`) is provided for health/status checks.
 """
 import os
 from contextlib import asynccontextmanager
@@ -20,9 +15,9 @@ from app.routes import router as api_router
 async def lifespan(_: FastAPI):
     """Manage startup and shutdown tasks."""
     try:
-        # Ensure tables exist (if Alembic migrations not run yet)
+        # Ensure tables exist (useful if Alembic migrations not run yet)
         Base.metadata.create_all(bind=engine)
-        print("✅ Database tables checked/created on startup.")
+        print("✅ Database tables checked/created successfully.")
     except Exception as e:
         print("❌ Error creating tables on startup:", e)
     yield
@@ -31,27 +26,25 @@ async def lifespan(_: FastAPI):
 # Initialize FastAPI application
 app = FastAPI(title="dumpTrac", lifespan=lifespan)
 
-# Allowed origins for CORS
+# ------------------- CORS CONFIG -------------------
 ALLOWED_ORIGINS = [
-    "https://dumptrac-hml5.vercel.app",
-    "https://dumptrac.vercel.app",
-    "http://127.0.0.1:5500",
+    "https://dumptrac-hml5.vercel.app",  # frontend
+    "https://dumptrac.vercel.app",       # backend itself
+    "http://127.0.0.1:5500",             # local dev
     "http://localhost:5500",
-    "http://127.0.0.1:5501",
-    "http://localhost:5501",
 ]
 
-# Allow preview deployments
+# Optional: allow preview deployments from Vercel
 VERCEL_URL = os.getenv("VERCEL_URL")
 if VERCEL_URL:
     ALLOWED_ORIGINS.append(f"https://{VERCEL_URL}")
 
-# Additional frontend URL
+# Optional: allow extra frontend URL via env
 FRONTEND_URL = os.getenv("FRONTEND_URL")
 if FRONTEND_URL:
     ALLOWED_ORIGINS.append(FRONTEND_URL)
 
-# Configure CORS middleware
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
@@ -60,11 +53,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ------------------- ROUTES -------------------
 # Register API routes under /api
 app.include_router(api_router, prefix="/api")
 
 # Root health check
 @app.get("/")
 def root():
-    """Return API health check response."""
-    return {"status": "ok", "message": "dumpTrac API"}
+    return {"status": "ok", "message": "dumpTrac API is running ✅"}
