@@ -4,7 +4,7 @@ const BASE_URL =
     ? "http://127.0.0.1:8000/api"
     : "https://dumptrac.vercel.app/api";
 
-// Generic API helper
+// Generic API helper with JSON parsing
 async function api(path, options = {}) {
   const res = await fetch(`${BASE_URL}${path}`, {
     method: options.method || "GET",
@@ -20,26 +20,30 @@ async function api(path, options = {}) {
 }
 
 // ------------------ INDEX PAGE ------------------
-// Ensure bin exists and submit report
+// Ensure bin exists (create if missing) and submit report
 async function ensureBin(location, latitude, longitude) {
-  // Send lat/lng as numbers to backend
+  if (latitude == null || longitude == null) {
+    throw new Error("Latitude and longitude are required.");
+  }
+
+  // Convert lat/lng to string for backend
   return api("/bins", {
     method: "POST",
-    body: { location: location, latitude: String(latitude), longitude: String(longitude) }
+    body: { location, latitude: String(latitude), longitude: String(longitude) }
   });
 }
 
 async function submitReport(location, latitude, longitude) {
   const bin = await ensureBin(location, latitude, longitude);
 
-  // Create report using bin.id (must be integer)
+  // Create report using bin.id
   return api("/reports", {
     method: "POST",
     body: { bin_id: bin.id, status: "full" }
   });
 }
 
-// Handle form submission
+// Handle index form submission
 function onIndexPage() {
   const form = document.getElementById("report-form");
   if (!form) return;
@@ -51,7 +55,6 @@ function onIndexPage() {
   const lngEl = document.getElementById("lng");
   const locationInput = document.getElementById("location");
 
-  // Use geolocation button
   useLocationBtn?.addEventListener("click", () => {
     geoStatus.textContent = "Fetching location...";
     if (!navigator.geolocation) {
@@ -70,7 +73,6 @@ function onIndexPage() {
     );
   });
 
-  // Form submission
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     status.textContent = "Submitting...";
@@ -84,7 +86,7 @@ function onIndexPage() {
       return;
     }
     if (isNaN(lat) || isNaN(lng)) {
-      status.textContent = "Error: Please attach your current coordinates using 'Use My Location'.";
+      status.textContent = "Error: Please attach your coordinates using 'Use My Location'.";
       return;
     }
 
@@ -105,26 +107,23 @@ function onIndexPage() {
 // ------------------ DASHBOARD PAGE ------------------
 async function loadReports() {
   try {
-    const reports = await api("/reports");
-    return { reports };
+    return { reports: await api("/reports") };
   } catch (err) {
     console.error("Failed to fetch reports:", err);
     return { reports: [] };
   }
 }
 
-// Clear a single report
 async function clearReport(reportId) {
   return api(`/reports/${reportId}/clear`, { method: "PUT" });
 }
 
-// Render dashboard table
 function renderReportsTable(reports) {
   const tableBody = document.querySelector("#reports-table tbody");
   if (!tableBody) return;
   tableBody.innerHTML = "";
 
-  if (!reports || reports.length === 0) {
+  if (!reports.length) {
     tableBody.innerHTML = "<tr><td colspan=6>No reports yet</td></tr>";
     return;
   }
@@ -137,7 +136,7 @@ function renderReportsTable(reports) {
       <td>${r.status}</td>
       <td>${new Date(r.created_at).toLocaleString()}</td>
       <td>${r.cleared_at ? new Date(r.cleared_at).toLocaleString() : "-"}</td>
-      <td>${r.status !== 'done' ? `<button class="clear-btn" data-id="${r.id}">Clear</button>` : "-"}</td>
+      <td>${r.status !== "done" ? `<button class="clear-btn" data-id="${r.id}">Clear</button>` : "-"}</td>
     `;
     tableBody.appendChild(tr);
   }
@@ -184,14 +183,9 @@ function renderMapMarkers(reports) {
     const lng = parseFloat(r.longitude);
     if (isNaN(lat) || isNaN(lng)) continue;
 
-    const htmlContent = r.status === "done" && r.cleared_at
-      ? `<div class="marker-green">Done</div>`
-      : `<div class="marker-red"></div>`;
-
+    const htmlContent = r.status === "done" ? `<div class="marker-green">Done</div>` : `<div class="marker-red"></div>`;
     const binIcon = L.divIcon({ html: htmlContent, className: "", iconSize: [24, 24], iconAnchor: [12, 12] });
-    const tooltipText = r.status === "done" && r.cleared_at
-      ? `Bin ${r.bin_id} - Done at ${new Date(r.cleared_at).toLocaleString()}`
-      : `Bin ${r.bin_id} - Full`;
+    const tooltipText = r.status === "done" ? `Bin ${r.bin_id} - Done at ${new Date(r.cleared_at).toLocaleString()}` : `Bin ${r.bin_id} - Full`;
 
     const marker = L.marker([lat, lng], { icon: binIcon });
     marker.bindTooltip(tooltipText, { permanent: false, direction: 'top', offset: [0, -10] });
@@ -213,7 +207,7 @@ async function refreshDashboard() {
   }
 }
 
-// Dashboard page initialization
+// Dashboard initialization
 function onDashboardPage() {
   const refreshBtn = document.getElementById("refresh");
   if (!refreshBtn) return;

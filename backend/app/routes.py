@@ -12,16 +12,20 @@ router = APIRouter()
 @router.post("/bins", response_model=schemas.BinRead)
 def create_bin(bin_in: schemas.BinCreate, db: Session = Depends(get_db)):
     """
-    Ensure bin exists; create new if missing.
+    Ensure a bin exists; create new if missing.
+    Latitude and longitude are required.
     """
+    if bin_in.latitude is None or bin_in.longitude is None:
+        raise HTTPException(status_code=400, detail="Latitude and longitude are required")
+
     existing = db.query(models.Bin).filter(models.Bin.location == bin_in.location).first()
     if existing:
         return existing
 
     bin_obj = models.Bin(
         location=bin_in.location,
-        latitude=bin_in.latitude,
-        longitude=bin_in.longitude
+        latitude=str(bin_in.latitude),
+        longitude=str(bin_in.longitude)
     )
     db.add(bin_obj)
     db.commit()
@@ -31,6 +35,7 @@ def create_bin(bin_in: schemas.BinCreate, db: Session = Depends(get_db)):
 
 @router.get("/bins", response_model=List[schemas.BinRead])
 def list_bins(db: Session = Depends(get_db)):
+    """List all bins, newest first."""
     return db.query(models.Bin).order_by(models.Bin.id.desc()).all()
 
 
@@ -38,15 +43,8 @@ def list_bins(db: Session = Depends(get_db)):
 
 @router.get("/reports", response_model=List[schemas.ReportRead])
 def list_reports(db: Session = Depends(get_db)):
-    """
-    List all reports, newest first.
-    """
-    try:
-        reports = db.query(models.Report).order_by(models.Report.created_at.desc()).all()
-        return reports
-    except Exception as e:
-        print("Error fetching reports:", e)
-        return []  # Safe fallback
+    """List all reports, newest first."""
+    return db.query(models.Report).order_by(models.Report.created_at.desc()).all()
 
 
 @router.post("/reports", response_model=schemas.ReportRead)
