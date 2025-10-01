@@ -1,41 +1,29 @@
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
-from dotenv import load_dotenv
 
-# Load environment variables from .env
-load_dotenv()
-
-# Get the DATABASE_URL from environment
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
-    raise ValueError("❌ DATABASE_URL is not set in environment variables. Please check your .env file.")
+    raise ValueError("❌ DATABASE_URL is not set. Check Vercel environment variables.")
 
-# Ensure correct driver for PostgreSQL
+# Ensure psycopg2 driver
 if DATABASE_URL.startswith("postgresql://") and "+psycopg2" not in DATABASE_URL:
     DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg2://", 1)
 
-# ✅ Ensure sslmode=require for Supabase
+# Force SSL if missing
 if "sslmode" not in DATABASE_URL:
-    if "?" in DATABASE_URL:
-        DATABASE_URL += "&sslmode=require"
-    else:
-        DATABASE_URL += "?sslmode=require"
+    DATABASE_URL += "?sslmode=require"
 
-# Create SQLAlchemy engine
-try:
-    engine = create_engine(DATABASE_URL, pool_pre_ping=True, echo=False)
-    print("✅ Database engine created successfully")
-except Exception as e:
-    raise RuntimeError(f"❌ Failed to connect to database. Check DATABASE_URL. Error: {e}")
+engine = create_engine(
+    DATABASE_URL,
+    pool_pre_ping=True,
+    echo=False,
+)
 
-# Create a configured "Session" class
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Base class for models (exported for Alembic)
 Base = declarative_base()
 
-# Dependency to get DB session for FastAPI routes
+# Dependency for routes
 def get_db():
     db = SessionLocal()
     try:
