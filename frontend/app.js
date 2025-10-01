@@ -1,5 +1,5 @@
 // ✅ Backend URL from environment variable
-const API_URL =
+const BASE_URL =
     window.location.hostname.includes("localhost") || window.location.hostname.includes("127.0.0.1")
         ? "http://127.0.0.1:8000/api"
         : "https://dumptrac.vercel.app/api";
