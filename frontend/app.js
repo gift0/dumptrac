@@ -1,5 +1,8 @@
 // ✅ Backend URL from environment variable
-const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api";
+const API_URL =
+    window.location.hostname.includes("localhost") || window.location.hostname.includes("127.0.0.1")
+        ? "http://127.0.0.1:8000/api"
+        : "https://dumptrac.vercel.app/api";
 
 
 // Generic API helper
