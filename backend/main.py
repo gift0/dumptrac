@@ -10,17 +10,19 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database import Base, engine
 from app.routes import router as api_router
 
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     """Startup and shutdown tasks."""
     try:
-        # Create tables if they do not exist
+        # Create tables if not exist (useful if migrations not run)
         Base.metadata.create_all(bind=engine)
         print("✅ Tables are ready")
     except Exception as e:
         print("❌ Error creating tables:", e)
     yield
     # Optional shutdown tasks
+
 
 # Initialize FastAPI app
 app = FastAPI(title="dumpTrac", lifespan=lifespan)
@@ -33,12 +35,12 @@ ALLOWED_ORIGINS = [
     "http://localhost:5500",
 ]
 
-# Allow Vercel preview deployments dynamically
+# Add optional preview deployment origin
 VERCEL_URL = os.getenv("VERCEL_URL")
 if VERCEL_URL:
     ALLOWED_ORIGINS.append(f"https://{VERCEL_URL}")
 
-# Allow custom frontend URLs
+# Add any custom frontend URL
 FRONTEND_URL = os.getenv("FRONTEND_URL")
 if FRONTEND_URL:
     ALLOWED_ORIGINS.append(FRONTEND_URL)
@@ -46,16 +48,25 @@ if FRONTEND_URL:
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,  # crucial for frontend access
+    allow_origins=ALLOWED_ORIGINS,  # <- this is critical
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ----------------- API Routes -----------------
+# ----------------- Routes -----------------
 app.include_router(api_router, prefix="/api")
 
-# ----------------- Root / Health Check -----------------
+# ----------------- Debug CORS Test -----------------
+@app.get("/cors-test")
+def cors_test():
+    """
+    Quick endpoint to verify CORS is working.
+    Call from frontend to check if Access-Control-Allow-Origin header is present.
+    """
+    return {"status": "ok", "message": "CORS is configured correctly"}
+
+# ----------------- Health Check -----------------
 @app.get("/")
 def root():
     return {"status": "ok", "message": "dumpTrac API"}
