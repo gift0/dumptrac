@@ -1,8 +1,7 @@
 """
 dumpTrac FastAPI application.
 
-This module initializes the FastAPI app, configures CORS middleware, 
-sets up the database schema, and registers API routes.
+Initializes FastAPI app, sets up CORS, database, and API routes.
 """
 import os
 from contextlib import asynccontextmanager
@@ -13,20 +12,20 @@ from app.routes import router as api_router
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    """Manage startup and shutdown tasks."""
+    """Startup and shutdown tasks."""
     try:
-        # Ensure tables exist (useful if Alembic migrations not run yet)
+        # Create tables if not exist (useful if migrations not run)
         Base.metadata.create_all(bind=engine)
-        print("✅ Database tables checked/created successfully.")
+        print("✅ Tables are ready")
     except Exception as e:
-        print("❌ Error creating tables on startup:", e)
+        print("❌ Error creating tables:", e)
     yield
-    # Optional shutdown logic
+    # Optional shutdown tasks
 
-# Initialize FastAPI application
+# Initialize FastAPI app
 app = FastAPI(title="dumpTrac", lifespan=lifespan)
 
-# ------------------- CORS CONFIG -------------------
+# ----------------- CORS Configuration -----------------
 ALLOWED_ORIGINS = [
     "https://dumptrac-hml5.vercel.app",  # frontend
     "https://dumptrac.vercel.app",       # backend itself
@@ -34,12 +33,12 @@ ALLOWED_ORIGINS = [
     "http://localhost:5500",
 ]
 
-# Optional: allow preview deployments from Vercel
+# Add optional preview deployment origin
 VERCEL_URL = os.getenv("VERCEL_URL")
 if VERCEL_URL:
     ALLOWED_ORIGINS.append(f"https://{VERCEL_URL}")
 
-# Optional: allow extra frontend URL via env
+# Add any custom frontend URL
 FRONTEND_URL = os.getenv("FRONTEND_URL")
 if FRONTEND_URL:
     ALLOWED_ORIGINS.append(FRONTEND_URL)
@@ -47,17 +46,16 @@ if FRONTEND_URL:
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
+    allow_origins=ALLOWED_ORIGINS,  # <- this is critical
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ------------------- ROUTES -------------------
-# Register API routes under /api
+# ----------------- Routes -----------------
 app.include_router(api_router, prefix="/api")
 
-# Root health check
+# ----------------- Health Check -----------------
 @app.get("/")
 def root():
-    return {"status": "ok", "message": "dumpTrac API is running ✅"}
+    return {"status": "ok", "message": "dumpTrac API"}
