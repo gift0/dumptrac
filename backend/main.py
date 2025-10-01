@@ -32,12 +32,19 @@ app = FastAPI(title="dumpTrac", lifespan=lifespan)
 
 # Define allowed origins for CORS
 ALLOWED_ORIGINS = [
-    "https://dumptrac-hml5.vercel.app",
-    "http://127.0.0.1:5500",
+    "https://dumptrac-hml5.vercel.app",   # frontend
+    "https://dumptrac.vercel.app",        # backend itself (safe to include)
+    "http://127.0.0.1:5500",              # local dev
     "http://localhost:5500",
     "http://127.0.0.1:5501",
     "http://localhost:5501",
 ]
+
+# Allow preview deployments (optional)
+VERCEL_URL = os.getenv("VERCEL_URL")  # e.g. dumptrac-hml5-git-main-username.vercel.app
+if VERCEL_URL:
+    ALLOWED_ORIGINS.append(f"https://{VERCEL_URL}")
+
 
 # Add additional frontend URL from environment variable if set
 FRONTEND_URL = os.getenv("FRONTEND_URL")
