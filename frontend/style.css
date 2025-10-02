@@ -25,7 +25,7 @@ header {
     height: 100px;
     padding: 8px 16px;
     display: flex;
-    justify-content: center; /* center the container */
+    justify-content: center;
     align-items: center;
     background: transparent;
     z-index: 1000;
@@ -33,7 +33,7 @@ header {
 
 header .container {
     width: 100%;
-    max-width: 1200px; /* match your page max width */
+    max-width: 1200px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -100,7 +100,7 @@ header .contact .info {
 /* Move overlay higher to overlap white space */
 .hero .overlay {
     position: absolute;
-    top: 15%; /* moved up from 20% */
+    top: 15%;
     left: 50%;
     transform: translateX(-50%);
     text-align: center;
@@ -112,28 +112,45 @@ header .contact .info {
     font-size: 50px;
     margin-bottom: 20px;
     color: #057931;
-    white-space: nowrap; /* prevent wrapping */
+    white-space: nowrap;
 }
 
+/* Static part of the hero text */
+.hero h1 .static-text {
+    display: inline-block;
+}
+
+/* Blinking cursor immediately after "Clean City," */
+.hero h1 .cursor {
+    display: inline-block;
+    width: 2px;
+    height: 1em;
+    background-color: #ffa400;
+    vertical-align: middle;
+    animation: blinkCursor 0.7s step-end infinite;
+}
+
+/* Typing effect for "Smart Living" */
 #typing-effect {
     display: inline-block;
     color: #ffa400;
-    border-right: 2px solid #ffa400;
     white-space: nowrap;
     overflow: hidden;
     vertical-align: middle;
     width: 0;
-    animation: typing 2s steps(15, end) forwards, blinkCursor 0.7s step-end infinite;
+    animation: typing 2s steps(12, end) forwards; /* 12 = characters in "Smart Living" */
 }
 
 /* Typing animation */
 @keyframes typing {
     from { width: 0; }
-    to { width: 150px; } /* adjust width to fit "Smart Living" */
+    to { width: 12ch; }
 }
+
+/* Blinking cursor animation */
 @keyframes blinkCursor {
-    0%, 100% { border-color: #ffa400; }
-    50% { border-color: transparent; }
+    0%, 100% { background-color: #ffa400; }
+    50% { background-color: transparent; }
 }
 
 .hero p {
@@ -322,7 +339,6 @@ footer {
     .hero { height: 660px; }
     .hero h1 { font-size: 25px; white-space: normal; width: 100vw; }
     .hero p { font-size: 15px; }
-    .report-right video { height: 200px; }
     header .contact .info { display: none; }
     header .brand img { max-width: 100px; height: 48px; }
     .support-button, .location-button, .report-button { padding: 8px 12px; font-size: 14px; }
