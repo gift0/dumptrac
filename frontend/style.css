@@ -118,6 +118,7 @@ header .contact .info {
 /* Static part of the hero text */
 .hero h1 .static-text {
     display: inline-block;
+    margin-right: 4px; /* tighter spacing */
 }
 
 /* Blinking cursor immediately after "Clean City," */
@@ -128,6 +129,7 @@ header .contact .info {
     background-color: #ffa400;
     vertical-align: middle;
     animation: blinkCursor 0.7s step-end infinite;
+    margin-left: 2px;
 }
 
 /* Typing effect for "Smart Living" */
@@ -138,7 +140,7 @@ header .contact .info {
     overflow: hidden;
     vertical-align: middle;
     width: 0;
-    animation: typing 2s steps(12, end) forwards; /* 12 = characters in "Smart Living" */
+    animation: typing 2s steps(12, end) forwards;
 }
 
 /* Typing animation */
@@ -305,6 +307,31 @@ button.clear-btn {
     font-weight: bold;
 }
 button.clear-btn:hover { background-color: #ffa400; }
+
+/* ==================== MAP MARKERS ==================== */
+.marker-full {
+    background: red;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    border: 2px solid white;
+    box-shadow: 0 0 8px rgba(255,0,0,0.8);
+    animation: blinkMarker 1.2s infinite;
+}
+
+.marker-done {
+    background: green;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    border: 2px solid white;
+    box-shadow: 0 0 4px rgba(0,128,0,0.6);
+}
+
+@keyframes blinkMarker {
+    0%, 100% { box-shadow: 0 0 4px rgba(255,0,0,0.5); }
+    50% { box-shadow: 0 0 12px rgba(255,0,0,1); }
+}
 
 /* ==================== FOOTER ==================== */
 footer {

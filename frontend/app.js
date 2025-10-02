@@ -181,25 +181,32 @@ function renderMapMarkers(reports) {
     const lng = parseFloat(r.bin.longitude);
     if (isNaN(lat) || isNaN(lng)) continue;
 
-    const htmlContent = r.status === "done"
-      ? `<div class="marker-green">✔</div>`
-      : `<div class="marker-red blink">⚠</div>`;
-
-    const binIcon = L.divIcon({
-      html: htmlContent,
-      className: "",
-      iconSize: [24, 24],
-      iconAnchor: [12, 12]
-    });
+    // ✅ Circle markers instead of icons
+    let markerCircle;
+    if (r.status === "done") {
+      markerCircle = L.circleMarker([lat, lng], {
+        radius: 10,
+        color: "green",
+        fillColor: "green",
+        fillOpacity: 0.9
+      });
+    } else {
+      markerCircle = L.circleMarker([lat, lng], {
+        radius: 10,
+        color: "red",
+        fillColor: "red",
+        fillOpacity: 0.9,
+        className: "blinking-marker" // CSS handles glow/blink
+      });
+    }
 
     const tooltipText =
       r.status === "done"
         ? `${r.bin.location} - Done at ${new Date(r.cleared_at).toLocaleString()}`
         : `${r.bin.location} - Full`;
 
-    const marker = L.marker([lat, lng], { icon: binIcon });
-    marker.bindTooltip(tooltipText, { permanent: false, direction: 'top', offset: [0, -10] });
-    markersLayer.addLayer(marker);
+    markerCircle.bindTooltip(tooltipText, { permanent: false, direction: 'top', offset: [0, -10] });
+    markersLayer.addLayer(markerCircle);
   }
 }
 
