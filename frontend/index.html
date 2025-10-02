@@ -4,6 +4,7 @@
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<title>Smart Waste - Report Bin</title>
+	<link rel="icon" type="image/png" href="./assests/dumptrac_favicon.png" />
 	<link rel="stylesheet" href="./style.css" />
 </head>
 <body>
@@ -14,7 +15,7 @@
 			</div>
 			<div class="contact">
 				<div class="info">
-					<span>📍 Lagos, Nigeria</span>
+					<span>📍Lagos, Nigeria</span>
 					<span>☎ +234 800 000 0000</span>
 				</div>
 				<a href="https://wa.me/2348000000000" class="support-button pulse-glow">
@@ -28,8 +29,8 @@
 		<section class="hero">
 			<img src="./assests/dumptrac_waste.png" alt="dumpTrac" />
 			<div class="overlay">
-				<h1>Clean City, <span id="typing-effect">Smart Living</span></h1>
-				<p>A smart platform that reports full bins, predicts pickups, and streamlines waste management.</p>
+				<h1>Clean City, <span id="typing-effect" class="typing"></span></h1>
+				<p>A smart platform that reports full bins and<br> streamlines waste management</p>
 				<button onclick="document.getElementById('report').scrollIntoView({behavior: 'smooth'})" class="cta-button pulse-glow">
 					Get Started
 				</button>
@@ -77,5 +78,38 @@
 		<p>© <span id="year"></span> dumpTrac. All rights reserved. 2025</p>
 	</footer>
 	<script src="./app.js"></script>
+
+	<script>
+const text = "Smart Living";
+const typingElement = document.getElementById("typing-effect");
+let index = 0;
+let isDeleting = false;
+let speed = 150; // typing speed
+
+function typeLoop() {
+	if (!isDeleting) {
+		typingElement.innerHTML = text.substring(0, index + 1);
+		index++;
+		if (index === text.length) {
+			isDeleting = true;
+			speed = 1000; // pause before deleting
+		} else {
+			speed = 150;
+		}
+	} else {
+		typingElement.innerHTML = text.substring(0, index - 1);
+		index--;
+		if (index === 0) {
+			isDeleting = false;
+			speed = 500; // pause before typing again
+		} else {
+			speed = 100;
+		}
+	}
+	setTimeout(typeLoop, speed);
+}
+
+document.addEventListener("DOMContentLoaded", typeLoop);
+</script>
 </body>
 </html>

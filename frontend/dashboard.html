@@ -4,6 +4,7 @@
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<title>Agency Dashboard - dumpTrac</title>
+	<link rel="icon" type="image/png" href="./assests/dumptrac_favicon.png" />
 	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
 	<link rel="stylesheet" href="./style.css" />
 	<style>
@@ -13,7 +14,6 @@
 			margin: 0;
 			padding: 0;
 		}
-		
 
 		.card {
 			background-color: white;
@@ -77,6 +77,29 @@
 			font-weight: bold;
 		}
 		.links a:hover { text-decoration: underline; }
+
+		/* Responsive Table */
+		@media (max-width: 768px) {
+			table, thead, tbody, th, td, tr {
+				display: block;
+				width: 100%;
+			}
+			thead tr { display: none; }
+			tbody tr { margin-bottom: 15px; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; }
+			td {
+				display: flex;
+				justify-content: space-between;
+				padding: 8px 10px;
+				border: none;
+				border-bottom: 1px solid #e5e7eb;
+				position: relative;
+			}
+			td::before {
+				content: attr(data-label);
+				font-weight: bold;
+				color: #334155;
+			}
+		}
 	</style>
 </head>
 <body>
@@ -121,7 +144,28 @@
 							<th>Action</th>
 						</tr>
 					</thead>
-					<tbody></tbody>
+					<tbody>
+						<tr>
+							<td data-label="ID">1</td>
+							<td data-label="Bin ID">BIN001</td>
+							<td data-label="Location">Ojuelegba</td>
+							<td data-label="Lat">6.5244</td>
+							<td data-label="Lng">3.3792</td>
+							<td data-label="Status">Full</td>
+							<td data-label="Created At">2025-10-02</td>
+							<td data-label="Action"><button class="clear-btn">View</button></td>
+						</tr>
+						<tr>
+							<td data-label="ID">2</td>
+							<td data-label="Bin ID">BIN002</td>
+							<td data-label="Location">Ikeja</td>
+							<td data-label="Lat">6.6018</td>
+							<td data-label="Lng">3.3515</td>
+							<td data-label="Status">Empty</td>
+							<td data-label="Created At">2025-10-02</td>
+							<td data-label="Action"><button class="clear-btn">View</button></td>
+						</tr>
+					</tbody>
 				</table>
 			</div>
 		</section>
@@ -131,10 +175,9 @@
 		</section>
 	</main>
 	<footer>
-		<p>© <span id="year"></span> dumpTrac. All rights reserved.</p>
+		<p>© <span id="year"></span> dumpTrac. All rights reserved. 2025</p>
 	</footer>
 
-	
 	<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 	<script src="./app.js"></script>
 </body>
