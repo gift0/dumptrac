@@ -91,4 +91,4 @@ migrations/
 MIT
 
 ## Author
-Gift Maduabuchi
+Team Pandas
