@@ -100,7 +100,7 @@ header .contact .info {
 /* Move overlay higher to overlap white space */
 .hero .overlay {
     position: absolute;
-    top: 15%;
+    top: 10%;
     left: 50%;
     transform: translateX(-50%);
     text-align: center;
@@ -139,14 +139,14 @@ header .contact .info {
     white-space: nowrap;
     overflow: hidden;
     vertical-align: middle;
-    width: 0;
+    max-width: 0; /* no space reserved */
     animation: typing 2s steps(12, end) forwards;
 }
 
 /* Typing animation */
 @keyframes typing {
-    from { width: 0; }
-    to { width: 12ch; }
+    from { max-width: 0; }
+    to { max-width: 12ch; } /* expands naturally */
 }
 
 /* Blinking cursor animation */
@@ -317,6 +317,7 @@ button.clear-btn:hover { background-color: #ffa400; }
     border: 2px solid white;
     box-shadow: 0 0 8px rgba(255,0,0,0.8);
     animation: blinkMarker 1.2s infinite;
+    cursor: pointer;
 }
 
 .marker-done {
@@ -326,6 +327,7 @@ button.clear-btn:hover { background-color: #ffa400; }
     height: 16px;
     border: 2px solid white;
     box-shadow: 0 0 4px rgba(0,128,0,0.6);
+    cursor: pointer;
 }
 
 @keyframes blinkMarker {
@@ -335,7 +337,7 @@ button.clear-btn:hover { background-color: #ffa400; }
 
 /* ==================== FOOTER ==================== */
 footer {
-    padding: 16px;
+    padding: 8px;
     border-top: 1px solid #0b0b0b;
     background: #057931;
     margin-top: 24px;
