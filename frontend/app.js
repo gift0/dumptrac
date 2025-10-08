@@ -181,34 +181,29 @@ function renderMapMarkers(reports) {
     const lng = parseFloat(r.bin.longitude);
     if (isNaN(lat) || isNaN(lng)) continue;
 
-    // ✅ Circle markers instead of icons
-    let markerCircle;
-    if (r.status === "done") {
-      markerCircle = L.circleMarker([lat, lng], {
-        radius: 10,
-        color: "green",
-        fillColor: "green",
-        fillOpacity: 0.9
-      });
-    } else {
-      markerCircle = L.circleMarker([lat, lng], {
-        radius: 10,
-        color: "red",
-        fillColor: "red",
-        fillOpacity: 0.9,
-        className: "blinking-marker" // CSS handles glow/blink
-      });
-    }
+    // ✅ Use divIcon for CSS animation
+    const isCleared = r.status === "done";
+    const htmlContent = isCleared
+      ? `<div class="marker-done"></div>`
+      : `<div class="marker-full"></div>`;
 
-    const tooltipText =
-      r.status === "done"
-        ? `${r.bin.location} - Done at ${new Date(r.cleared_at).toLocaleString()}`
-        : `${r.bin.location} - Full`;
+    const binIcon = L.divIcon({
+      html: htmlContent,
+      className: "custom-marker",
+      iconSize: [20, 20],
+      iconAnchor: [10, 10]
+    });
 
-    markerCircle.bindTooltip(tooltipText, { permanent: false, direction: 'top', offset: [0, -10] });
-    markersLayer.addLayer(markerCircle);
+    const tooltipText = isCleared
+      ? `${r.bin.location} - Done at ${new Date(r.cleared_at).toLocaleString()}`
+      : `${r.bin.location} - Full`;
+
+    const marker = L.marker([lat, lng], { icon: binIcon });
+    marker.bindTooltip(tooltipText, { permanent: false, direction: 'top', offset: [0, -10] });
+    markersLayer.addLayer(marker);
   }
 }
+
 
 // Refresh dashboard
 async function refreshDashboard() {

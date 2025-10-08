@@ -313,89 +313,92 @@ button.clear-btn:hover { background-color: #ffa400; }
 .marker-done {
     position: relative;
     border-radius: 50%;
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     border: 2px solid white;
     cursor: pointer;
     z-index: 2;
+    transition: transform 0.2s ease-in-out;
 }
 
 /* Red marker (bin full) */
 .marker-full {
     background: red;
-    box-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
-    animation: blinkRed 1.2s infinite;
+    box-shadow: 0 0 12px rgba(255, 0, 0, 0.8);
+    animation: blinkRed 1s infinite ease-in-out;
 }
 
 /* Green marker (done/cleared) */
 .marker-done {
     background: green;
-    box-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
-    animation: blinkGreen 1.2s infinite;
+    box-shadow: 0 0 12px rgba(0, 255, 0, 0.8);
+    animation: blinkGreen 1.6s infinite ease-in-out;
 }
 
-/* Add pulsing ring for red */
+/* Pulsing ripple ring for red */
 .marker-full::after {
     content: "";
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 20px;
-    height: 20px;
-    background: rgba(255, 0, 0, 0.4);
+    width: 22px;
+    height: 22px;
+    background: rgba(255, 0, 0, 0.35);
     border-radius: 50%;
-    transform: translate(-50%, -50%) scale(0.8);
+    transform: translate(-50%, -50%) scale(0.6);
     z-index: 1;
-    animation: pulseRed 1.6s infinite ease-out;
+    animation: pulseRed 1.8s infinite ease-out;
 }
 
-/* Add pulsing ring for green */
+/* Pulsing ripple ring for green */
 .marker-done::after {
     content: "";
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 20px;
-    height: 20px;
-    background: rgba(0, 255, 0, 0.4);
+    width: 22px;
+    height: 22px;
+    background: rgba(0, 255, 0, 0.35);
     border-radius: 50%;
-    transform: translate(-50%, -50%) scale(0.8);
+    transform: translate(-50%, -50%) scale(0.6);
     z-index: 1;
-    animation: pulseGreen 1.6s infinite ease-out;
+    animation: pulseGreen 2.2s infinite ease-out;
 }
 
-/* Red blink animation */
+/* ==================== ANIMATIONS ==================== */
+
+/* Red blink animation (urgent) */
 @keyframes blinkRed {
     0%, 100% {
         box-shadow: 0 0 8px rgba(255, 0, 0, 0.6);
         transform: scale(1);
     }
     50% {
-        box-shadow: 0 0 16px rgba(255, 0, 0, 1);
+        box-shadow: 0 0 20px rgba(255, 0, 0, 1);
         transform: scale(1.3);
     }
 }
 
-/* Green blink animation */
+/* Green blink animation (cleared) */
 @keyframes blinkGreen {
     0%, 100% {
         box-shadow: 0 0 8px rgba(0, 255, 0, 0.6);
         transform: scale(1);
     }
     50% {
-        box-shadow: 0 0 16px rgba(0, 255, 0, 1);
-        transform: scale(1.3);
+        box-shadow: 0 0 18px rgba(0, 255, 0, 1);
+        transform: scale(1.2);
     }
 }
 
-/* Red pulsing ring animation */
+/* Red ripple pulse */
 @keyframes pulseRed {
     0% {
         transform: translate(-50%, -50%) scale(0.6);
         opacity: 0.7;
     }
     70% {
-        transform: translate(-50%, -50%) scale(1.5);
+        transform: translate(-50%, -50%) scale(1.6);
         opacity: 0;
     }
     100% {
@@ -403,20 +406,22 @@ button.clear-btn:hover { background-color: #ffa400; }
     }
 }
 
-/* Green pulsing ring animation */
+/* Green ripple pulse */
 @keyframes pulseGreen {
     0% {
         transform: translate(-50%, -50%) scale(0.6);
-        opacity: 0.7;
+        opacity: 0.6;
     }
     70% {
-        transform: translate(-50%, -50%) scale(1.5);
+        transform: translate(-50%, -50%) scale(1.6);
         opacity: 0;
     }
     100% {
         opacity: 0;
     }
 }
+
+
 
 
 /* ==================== FOOTER ==================== */
