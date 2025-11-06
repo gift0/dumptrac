@@ -159,14 +159,35 @@ let markersLayer = null;
 function ensureMap() {
   const mapEl = document.getElementById("map");
   if (!mapEl) return null;
+  
   if (!mapInstance) {
+  // ✅ Default center (Lagos)
     mapInstance = L.map("map").setView([6.5244, 3.3792], 11);
+
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '© OpenStreetMap'
     }).addTo(mapInstance);
+
     markersLayer = L.layerGroup().addTo(mapInstance);
+
+    // ✅ New code: try to center the map using user's actual live location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          mapInstance.setView([latitude, longitude], 13);
+        },
+        (err) => {
+          console.warn("Geolocation failed or blocked:", err.message);
+          // fallback to Lagos
+          mapInstance.setView([6.5244, 3.3792], 11);
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    }
   }
+
   return mapInstance;
 }
 
