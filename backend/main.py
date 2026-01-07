@@ -10,6 +10,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database import Base, engine
 from app.routes import router as api_router
 
+# 🔹 NEW: keepalive scheduler import (safe addition)
+from app.keepalive import start_scheduler
+
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
@@ -18,6 +21,11 @@ async def lifespan(_: FastAPI):
         # Create tables if not exist (useful if migrations not run)
         Base.metadata.create_all(bind=engine)
         print("✅ Tables are ready")
+
+        # 🔹 NEW: start bi-weekly DB keepalive job
+        start_scheduler()
+        print("⏱️ Keepalive scheduler started")
+
     except Exception as e:
         print("❌ Error creating tables:", e)
     yield
