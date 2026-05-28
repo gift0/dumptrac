@@ -5,10 +5,10 @@ Initializes FastAPI app, sets up CORS, database, and API routes.
 """
 import os
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from backend.app.database import Base, engine
-from backend.app.routes import router as api_router
+from fastapi import FastAPI  # type: ignore[import]
+from fastapi.middleware.cors import CORSMiddleware  # type: ignore[import]
+from app.database import Base, engine
+from app.routes import router as api_router
 
 
 @asynccontextmanager
@@ -18,7 +18,7 @@ async def lifespan(_: FastAPI):
         # Create tables if not exist (useful if migrations not run)
         Base.metadata.create_all(bind=engine)
         print("✅ Tables are ready")
-    except Exception as e:
+    except OSError as e:
         print("❌ Error creating tables:", e)
     yield
     # Optional shutdown tasks
@@ -58,15 +58,21 @@ app.add_middleware(
 app.include_router(api_router, prefix="/api")
 
 # ----------------- Debug CORS Test -----------------
+
+
 @app.get("/cors-test")
 def cors_test():
     """
     Quick endpoint to verify CORS is working.
-    Call from frontend to check if Access-Control-Allow-Origin header is present.
+    Call from frontend to check if
+    Access-Control-Allow-Origin header is present.
     """
     return {"status": "ok", "message": "CORS is configured correctly"}
 
 # ----------------- Health Check -----------------
+
+
 @app.get("/")
 def root():
+    """Root endpoint returning API status."""
     return {"status": "ok", "message": "dumpTrac API"}
